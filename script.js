@@ -63,8 +63,9 @@
   }
 
   function createProductCard(product) {
-    const inCart    = cart.find(i => i.id === product.id);
-    const outOfStock = !product.stock;
+    const inCart     = cart.find(i => i.id === product.id);
+    const qty        = (typeof product.stock_cantidad === 'number') ? product.stock_cantidad : null;
+    const outOfStock = !product.stock || qty === 0;
 
     const article = document.createElement('article');
     article.className = 'product-card reveal' + (outOfStock ? ' out-of-stock' : '');
@@ -121,8 +122,8 @@
       <div class="product-img-wrap">
         ${imgHtml}
         ${badgeText ? `<span class="product-badge ${badgeClass}">${badgeText}</span>` : ''}
-        <span class="stock-badge ${outOfStock ? 'stock-no' : 'stock-ok'}">
-          ${outOfStock ? '✕ Sin stock' : '✓ Disponible'}
+        <span class="stock-badge ${outOfStock ? 'stock-no' : (qty !== null && qty > 0 ? 'stock-low' : 'stock-ok')}">
+          ${outOfStock ? '✕ Sin stock' : (qty !== null && qty > 0 ? `⚡ Quedan ${qty}` : '✓ Disponible')}
         </span>
         ${promoOn ? `<span class="promo-img-badge">${promoLabel}</span>` : ''}
       </div>

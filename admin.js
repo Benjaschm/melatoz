@@ -135,6 +135,19 @@ function renderAdminProducts() {
           <button class="btn-toggle-visible" data-action="visible" data-id="${p.id}">${p.disponible ? '👁 Ocultar' : '👁 Mostrar'}</button>
           <button class="btn-delete"         data-action="delete"  data-id="${p.id}">🗑 Eliminar</button>
         </div>
+        <div class="stock-quick-edit">
+          <span class="stock-quick-label">📦 Stock:</span>
+          <button class="btn-stock-adj" data-id="${p.id}" data-adj="-1" title="Restar unidad">−</button>
+          <input  class="stock-qty-input"
+                  type="number" min="0"
+                  data-id="${p.id}"
+                  value="${p.stock_cantidad ?? ''}"
+                  placeholder="∞" />
+          <button class="btn-stock-adj" data-id="${p.id}" data-adj="1" title="Sumar unidad">+</button>
+          <span class="stock-status-hint ${stockHintClass(p.stock_cantidad)}">
+            ${stockHintText(p.stock_cantidad)}
+          </span>
+        </div>
       </div>
     `;
     list.appendChild(card);
@@ -152,7 +165,77 @@ function renderAdminProducts() {
     });
   });
 
+  // Stock quick-edit: input blur + Enter
+  list.querySelectorAll('.stock-qty-input').forEach(input => {
+    input.addEventListener('blur',    () => saveStockQty(parseInt(input.dataset.id), input));
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+  });
+
+  // Stock quick-edit: +/- buttons
+  list.querySelectorAll('.btn-stock-adj').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id    = parseInt(btn.dataset.id);
+      const input = list.querySelector(`.stock-qty-input[data-id="${id}"]`);
+      if (!input) return;
+      const cur    = parseInt(input.value) || 0;
+      const newVal = Math.max(0, cur + parseInt(btn.dataset.adj));
+      input.value  = newVal;
+      saveStockQty(id, input);
+    });
+  });
+
   initSortable();
+}
+
+// ── Stock quantity helpers ─────────────────────────────────
+function stockHintClass(qty) {
+  if (qty === null || qty === undefined) return 'nil';
+  if (qty === 0) return 'out';
+  if (qty <= 5)  return 'low';
+  return 'ok';
+}
+
+function stockHintText(qty) {
+  if (qty === null || qty === undefined) return 'sin límite';
+  if (qty === 0) return '✕ sin stock';
+  return `${qty} disponibles`;
+}
+
+async function saveStockQty(id, input) {
+  const raw = input.value.trim();
+  const qty = raw === '' ? null : Math.max(0, parseInt(raw) || 0);
+
+  const p = adminProducts.find(x => x.id === id);
+  if (!p || p.stock_cantidad === qty) return;
+
+  input.classList.add('saving');
+
+  const { error } = await db.from('products').update({ stock_cantidad: qty }).eq('id', id);
+
+  input.classList.remove('saving');
+
+  if (error) {
+    showToast('Error: ' + error.message);
+    input.value = p.stock_cantidad ?? '';
+    return;
+  }
+
+  p.stock_cantidad = qty;
+  input.classList.add('saved');
+  setTimeout(() => input.classList.remove('saved'), 1200);
+
+  // Actualiza el hint de estado junto al input
+  const hint = input.closest('.stock-quick-edit')?.querySelector('.stock-status-hint');
+  if (hint) {
+    hint.className = `stock-status-hint ${stockHintClass(qty)}`;
+    hint.textContent = stockHintText(qty);
+  }
+
+  showToast(
+    qty === null ? '✓ Stock sin límite' :
+    qty === 0   ? '✓ Marcado sin stock' :
+    `✓ Stock: ${qty} unidades`
+  );
 }
 
 // ── Drag-and-drop order ────────────────────────────────────
@@ -259,7 +342,7 @@ function closeModal() {
 
 function clearForm() {
   ['f-nombre','f-marca','f-dosis','f-cantidad','f-sabor','f-precio','f-etiqueta','f-descripcion','f-imagen',
-   'f-precio-oferta','f-texto-promo','f-promo-inicio','f-promo-fin']
+   'f-stock-cantidad','f-precio-oferta','f-texto-promo','f-promo-inicio','f-promo-fin']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('f-categoria').value     = 'adultos';
   document.getElementById('f-stock').checked       = true;
@@ -284,6 +367,7 @@ function fillForm(p) {
   document.getElementById('f-stock').checked       = !!p.stock;
   document.getElementById('f-disponible').checked  = !!p.disponible;
   document.getElementById('f-destacado').checked   = !!p.destacado;
+  set('f-stock-cantidad', p.stock_cantidad ?? '');
   // Promo fields
   document.getElementById('f-promo-activa').checked = !!p.promo_activa;
   set('f-precio-oferta', p.precio_oferta ?? '');
@@ -309,9 +393,13 @@ function getFormData() {
     imagen:        document.getElementById('f-imagen').value.trim(),
     imagenes:      [document.getElementById('f-imagen').value.trim()].filter(Boolean),
     categoria:     document.getElementById('f-categoria').value,
-    stock:         document.getElementById('f-stock').checked,
-    disponible:    document.getElementById('f-disponible').checked,
-    destacado:     document.getElementById('f-destacado').checked,
+    stock:          document.getElementById('f-stock').checked,
+    disponible:     document.getElementById('f-disponible').checked,
+    destacado:      document.getElementById('f-destacado').checked,
+    stock_cantidad: (() => {
+      const v = document.getElementById('f-stock-cantidad').value.trim();
+      return v === '' ? null : Math.max(0, parseInt(v) || 0);
+    })(),
     // Promo
     promo_activa:  document.getElementById('f-promo-activa').checked,
     precio_oferta: precioOferta,

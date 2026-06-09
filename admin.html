@@ -428,6 +428,66 @@
     }
     .empty-state p { font-size: .95rem; margin-top: 10px; }
 
+    /* ─── Stock quick-edit ─── */
+    .stock-quick-edit {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #F3F0F8;
+      flex-wrap: wrap;
+    }
+    .stock-quick-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #7B6A95;
+      flex-shrink: 0;
+    }
+    .stock-qty-input {
+      width: 64px;
+      text-align: center;
+      padding: 5px 8px;
+      border: 2px solid #E8DEFF;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 800;
+      color: #1C0E36;
+      outline: none;
+      background: #FAF7FF;
+      transition: border-color .2s;
+      -moz-appearance: textfield;
+    }
+    .stock-qty-input::-webkit-inner-spin-button,
+    .stock-qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .stock-qty-input:focus { border-color: #7C4DB5; background: #fff; }
+    .stock-qty-input.saving { border-color: #A87DD8; }
+    .stock-qty-input.saved  { border-color: #22C55E; }
+    .btn-stock-adj {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: #EDE0FA;
+      color: #5B2D8E;
+      font-size: 1.1rem;
+      font-weight: 800;
+      line-height: 1;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .btn-stock-adj:hover  { background: #D8B8F0; }
+    .btn-stock-adj:active { transform: scale(.92); }
+    .stock-status-hint {
+      font-size: .72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .stock-status-hint.ok  { color: #15803D; }
+    .stock-status-hint.low { color: #92400E; }
+    .stock-status-hint.out { color: #B91C1C; }
+    .stock-status-hint.nil { color: #9CA3AF; }
+
     /* ─── Drag-and-drop order ─── */
     .drag-handle {
       display: flex;
@@ -567,6 +627,12 @@
           <div class="form-field">
             <label for="f-precio">Precio CLP *</label>
             <input type="number" id="f-precio" placeholder="14990" min="0" required />
+          </div>
+
+          <div class="form-field">
+            <label for="f-stock-cantidad">Unidades en stock</label>
+            <input type="number" id="f-stock-cantidad" placeholder="Vacío = sin límite" min="0" />
+            <span class="hint">Vacío → solo muestra "Disponible". 0 → sin stock. 5 → "Quedan 5 uds".</span>
           </div>
 
           <div class="form-field">

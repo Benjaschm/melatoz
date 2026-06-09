@@ -99,6 +99,13 @@ ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS promo_inicio   TIMESTAMPTZ DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS promo_fin      TIMESTAMPTZ DEFAULT NULL;
 
+-- MIGRACIÓN: Stock con cantidad exacta
+-- stock_cantidad = null → sin control (muestra "Disponible")
+-- stock_cantidad = 0   → sin stock (deshabilita el botón de compra)
+-- stock_cantidad > 0   → muestra "Quedan X unidades"
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS stock_cantidad INTEGER DEFAULT NULL;
+
 -- MIGRACIÓN: Orden manual de productos
 -- Permite al admin definir el orden de aparición en la tienda.
 ALTER TABLE public.products

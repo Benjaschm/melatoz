@@ -77,6 +77,7 @@ const PRODUCTS = [
     texto_promo: "Oferta",
     promo_inicio: null,
     promo_fin: null,
+    stock_cantidad: null,
     orden: 1
   },
   {
