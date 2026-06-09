@@ -98,3 +98,11 @@ ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS texto_promo    TEXT        DEFAULT 'Oferta',
   ADD COLUMN IF NOT EXISTS promo_inicio   TIMESTAMPTZ DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS promo_fin      TIMESTAMPTZ DEFAULT NULL;
+
+-- MIGRACIÓN: Orden manual de productos
+-- Permite al admin definir el orden de aparición en la tienda.
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS orden INTEGER DEFAULT NULL;
+
+-- Asignar orden inicial basado en el id existente
+UPDATE public.products SET orden = id WHERE orden IS NULL;

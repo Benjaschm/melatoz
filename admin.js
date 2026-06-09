@@ -4,8 +4,9 @@
 // ============================================================
 
 // ── State ──────────────────────────────────────────────────
-let adminProducts = [];
-let editingId     = null;
+let adminProducts    = [];
+let editingId        = null;
+let sortableInstance = null;
 
 // ── Auth ───────────────────────────────────────────────────
 async function doLogin(email, pass) {
@@ -59,7 +60,7 @@ async function loadAndRender() {
   const { data, error } = await db
     .from('products')
     .select('*')
-    .order('destacado', { ascending: false })
+    .order('orden', { ascending: true, nullsFirst: false })
     .order('id');
 
   if (error) {
@@ -94,7 +95,7 @@ function renderAdminProducts() {
   }
 
   list.innerHTML = '';
-  adminProducts.forEach(p => {
+  adminProducts.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'admin-product-card' + (!p.disponible ? ' inactive' : '');
     card.dataset.id = p.id;
@@ -105,13 +106,20 @@ function renderAdminProducts() {
       : (p.promo_activa ? '<span class="admin-chip chip-promo" style="opacity:.5">Promo (sin precio)</span>' : '');
 
     card.innerHTML = `
+      <div class="drag-handle" title="Arrastra para reordenar">
+        <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" aria-hidden="true">
+          <circle cx="3" cy="3"  r="1.8"/><circle cx="9" cy="3"  r="1.8"/>
+          <circle cx="3" cy="9"  r="1.8"/><circle cx="9" cy="9"  r="1.8"/>
+          <circle cx="3" cy="15" r="1.8"/><circle cx="9" cy="15" r="1.8"/>
+        </svg>
+      </div>
       ${p.imagen
-        ? `<img src="${p.imagen}" alt="${p.nombre}" class="admin-product-img"
+        ? `<img src="${p.imagen}" alt="${p.nombre}" class="admin-product-img" draggable="false"
              onerror="this.outerHTML='<div class=admin-product-img-placeholder>Sin img</div>'" />`
         : `<div class="admin-product-img-placeholder">Sin imagen</div>`
       }
       <div class="admin-product-info">
-        <h3>${p.nombre}</h3>
+        <h3><span class="order-pos">${i + 1}</span>${p.nombre}</h3>
         <div class="admin-product-meta">
           <span class="admin-chip chip-price">$${formatAdminPrice(p.precio)}</span>
           <span class="admin-chip ${p.stock ? 'chip-stock' : 'chip-nostock'}">${p.stock ? 'Con stock' : 'Sin stock'}</span>
@@ -143,6 +151,48 @@ function renderAdminProducts() {
       }
     });
   });
+
+  initSortable();
+}
+
+// ── Drag-and-drop order ────────────────────────────────────
+function initSortable() {
+  if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+  const list = document.getElementById('admin-products-list');
+  if (!list || adminProducts.length < 2 || typeof Sortable === 'undefined') return;
+
+  sortableInstance = Sortable.create(list, {
+    animation: 180,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    onEnd: async () => {
+      // Sync adminProducts array with the new DOM order
+      const newOrder = [...list.querySelectorAll('.admin-product-card')]
+        .map(c => parseInt(c.dataset.id));
+      adminProducts.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+
+      // Update position badges in-place (no full re-render needed)
+      list.querySelectorAll('.order-pos').forEach((badge, i) => {
+        badge.textContent = i + 1;
+      });
+
+      await saveOrder();
+    },
+  });
+}
+
+async function saveOrder() {
+  showToast('Guardando orden…');
+  const results = await Promise.all(
+    adminProducts.map((p, i) => db.from('products').update({ orden: i + 1 }).eq('id', p.id))
+  );
+  if (results.some(r => r.error)) {
+    showToast('⚠ Error al guardar el orden');
+  } else {
+    showToast('✓ Orden guardado');
+  }
 }
 
 // ── Product actions ────────────────────────────────────────

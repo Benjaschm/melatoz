@@ -76,7 +76,8 @@ const PRODUCTS = [
     precio_oferta: null,
     texto_promo: "Oferta",
     promo_inicio: null,
-    promo_fin: null
+    promo_fin: null,
+    orden: 1
   },
   {
     id: 2,
@@ -101,7 +102,8 @@ const PRODUCTS = [
     precio_oferta: null,
     texto_promo: "Oferta",
     promo_inicio: null,
-    promo_fin: null
+    promo_fin: null,
+    orden: 2
   },
   {
     id: 3,
@@ -126,6 +128,7 @@ const PRODUCTS = [
     precio_oferta: null,
     texto_promo: "Oferta",
     promo_inicio: null,
-    promo_fin: null
+    promo_fin: null,
+    orden: 3
   }
 ];

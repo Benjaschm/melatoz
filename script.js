@@ -153,7 +153,11 @@
       return p.categoria === filter;
     });
 
-    visible.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
+    visible.sort((a, b) => {
+      const ao = a.orden ?? Infinity;
+      const bo = b.orden ?? Infinity;
+      return ao !== bo ? ao - bo : a.id - b.id;
+    });
 
     grid.innerHTML = '';
 
@@ -587,7 +591,7 @@
       const { data, error } = await db
         .from('products')
         .select('*')
-        .order('destacado', { ascending: false })
+        .order('orden', { ascending: true, nullsFirst: false })
         .order('id');
       if (error) throw error;
       _products = data || [];
