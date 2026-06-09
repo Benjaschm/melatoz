@@ -99,6 +99,11 @@ function renderAdminProducts() {
     card.className = 'admin-product-card' + (!p.disponible ? ' inactive' : '');
     card.dataset.id = p.id;
 
+    const promoValid = p.promo_activa && p.precio_oferta && p.precio_oferta < p.precio;
+    const promoChip  = promoValid
+      ? `<span class="admin-chip chip-promo">-${Math.round((1 - p.precio_oferta / p.precio) * 100)}% → $${formatAdminPrice(p.precio_oferta)}</span>`
+      : (p.promo_activa ? '<span class="admin-chip chip-promo" style="opacity:.5">Promo (sin precio)</span>' : '');
+
     card.innerHTML = `
       ${p.imagen
         ? `<img src="${p.imagen}" alt="${p.nombre}" class="admin-product-img"
@@ -113,6 +118,7 @@ function renderAdminProducts() {
           ${!p.disponible ? '<span class="admin-chip chip-hidden">Oculto</span>' : ''}
           <span class="admin-chip chip-cat">${p.categoria}</span>
           ${p.etiqueta ? `<span class="admin-chip" style="background:#EDE0FA;color:#5B2D8E">${p.etiqueta}</span>` : ''}
+          ${promoChip}
         </div>
         <p style="font-size:.82rem;color:#7B6A95;line-height:1.5">${p.descripcion || ''}</p>
         <div class="admin-product-actions">
@@ -202,12 +208,15 @@ function closeModal() {
 }
 
 function clearForm() {
-  ['f-nombre','f-marca','f-dosis','f-cantidad','f-sabor','f-precio','f-etiqueta','f-descripcion','f-imagen']
+  ['f-nombre','f-marca','f-dosis','f-cantidad','f-sabor','f-precio','f-etiqueta','f-descripcion','f-imagen',
+   'f-precio-oferta','f-texto-promo','f-promo-inicio','f-promo-fin']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('f-categoria').value     = 'adultos';
   document.getElementById('f-stock').checked       = true;
   document.getElementById('f-disponible').checked  = true;
   document.getElementById('f-destacado').checked   = false;
+  document.getElementById('f-promo-activa').checked = false;
+  updateDescuentoPreview();
 }
 
 function fillForm(p) {
@@ -222,28 +231,62 @@ function fillForm(p) {
   set('f-descripcion', p.descripcion);
   set('f-imagen',      p.imagen);
   set('f-categoria',   p.categoria || 'adultos');
-  document.getElementById('f-stock').checked      = !!p.stock;
+  document.getElementById('f-stock').checked       = !!p.stock;
   document.getElementById('f-disponible').checked  = !!p.disponible;
   document.getElementById('f-destacado').checked   = !!p.destacado;
+  // Promo fields
+  document.getElementById('f-promo-activa').checked = !!p.promo_activa;
+  set('f-precio-oferta', p.precio_oferta ?? '');
+  set('f-texto-promo',   p.texto_promo ?? '');
+  set('f-promo-inicio',  p.promo_inicio ? p.promo_inicio.slice(0, 16) : '');
+  set('f-promo-fin',     p.promo_fin    ? p.promo_fin.slice(0, 16)    : '');
+  updateDescuentoPreview();
 }
 
 function getFormData() {
+  const precioOfertaRaw = parseFloat(document.getElementById('f-precio-oferta').value);
+  const precioOferta    = isNaN(precioOfertaRaw) || precioOfertaRaw <= 0 ? null : Math.round(precioOfertaRaw);
+
   return {
-    nombre:      document.getElementById('f-nombre').value.trim(),
-    marca:       document.getElementById('f-marca').value.trim() || 'Natrol',
-    dosis:       document.getElementById('f-dosis').value.trim(),
-    cantidad:    parseInt(document.getElementById('f-cantidad').value) || 0,
-    sabor:       document.getElementById('f-sabor').value.trim(),
-    precio:      parseFloat(document.getElementById('f-precio').value) || 0,
-    etiqueta:    document.getElementById('f-etiqueta').value.trim(),
-    descripcion: document.getElementById('f-descripcion').value.trim(),
-    imagen:      document.getElementById('f-imagen').value.trim(),
-    imagenes:    [document.getElementById('f-imagen').value.trim()].filter(Boolean),
-    categoria:   document.getElementById('f-categoria').value,
-    stock:       document.getElementById('f-stock').checked,
-    disponible:  document.getElementById('f-disponible').checked,
-    destacado:   document.getElementById('f-destacado').checked,
+    nombre:        document.getElementById('f-nombre').value.trim(),
+    marca:         document.getElementById('f-marca').value.trim() || 'Natrol',
+    dosis:         document.getElementById('f-dosis').value.trim(),
+    cantidad:      parseInt(document.getElementById('f-cantidad').value) || 0,
+    sabor:         document.getElementById('f-sabor').value.trim(),
+    precio:        parseFloat(document.getElementById('f-precio').value) || 0,
+    etiqueta:      document.getElementById('f-etiqueta').value.trim(),
+    descripcion:   document.getElementById('f-descripcion').value.trim(),
+    imagen:        document.getElementById('f-imagen').value.trim(),
+    imagenes:      [document.getElementById('f-imagen').value.trim()].filter(Boolean),
+    categoria:     document.getElementById('f-categoria').value,
+    stock:         document.getElementById('f-stock').checked,
+    disponible:    document.getElementById('f-disponible').checked,
+    destacado:     document.getElementById('f-destacado').checked,
+    // Promo
+    promo_activa:  document.getElementById('f-promo-activa').checked,
+    precio_oferta: precioOferta,
+    texto_promo:   document.getElementById('f-texto-promo').value.trim() || 'Oferta',
+    promo_inicio:  document.getElementById('f-promo-inicio').value || null,
+    promo_fin:     document.getElementById('f-promo-fin').value    || null,
   };
+}
+
+function updateDescuentoPreview() {
+  const preview = document.getElementById('f-descuento-preview');
+  if (!preview) return;
+  const precio  = parseFloat(document.getElementById('f-precio')?.value) || 0;
+  const oferta  = parseFloat(document.getElementById('f-precio-oferta')?.value) || 0;
+  if (precio > 0 && oferta > 0 && oferta < precio) {
+    const pct = Math.round((1 - oferta / precio) * 100);
+    preview.textContent = `${pct}% de descuento — ahorro ${formatAdminPrice(precio - oferta)}`;
+    preview.className = 'hint promo-preview valid';
+  } else if (precio > 0 && oferta > 0 && oferta >= precio) {
+    preview.textContent = '⚠ El precio oferta debe ser menor al precio normal';
+    preview.className = 'hint promo-preview invalid';
+  } else {
+    preview.textContent = '—';
+    preview.className = 'hint promo-preview';
+  }
 }
 
 async function handleFormSubmit(e) {
@@ -253,6 +296,10 @@ async function handleFormSubmit(e) {
   if (!data.nombre)      { alert('El nombre es obligatorio.'); return; }
   if (!data.precio)      { alert('El precio es obligatorio.'); return; }
   if (!data.descripcion) { alert('La descripción es obligatoria.'); return; }
+  if (data.promo_activa && data.precio_oferta !== null && data.precio_oferta >= data.precio) {
+    alert('El precio de oferta debe ser menor al precio normal. Corrígelo antes de guardar.');
+    return;
+  }
 
   const saveBtn = document.querySelector('#product-form .btn-save');
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Guardando…'; }
@@ -338,6 +385,11 @@ async function initAdmin() {
 
   // Form submit
   document.getElementById('product-form')?.addEventListener('submit', handleFormSubmit);
+
+  // Live promo preview: recalculate when precio or precio_oferta change
+  ['f-precio', 'f-precio-oferta'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateDescuentoPreview);
+  });
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 }

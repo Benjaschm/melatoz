@@ -219,6 +219,36 @@
     .chip-nostock { background: #FEE2E2; color: #B91C1C; }
     .chip-hidden  { background: #F3F4F6; color: #6B7280; }
     .chip-cat     { background: #E0F2FE; color: #0284C7; }
+    .chip-promo   { background: #FCE7F3; color: #BE185D; }
+
+    /* ─── Promo section in form ─── */
+    .form-section-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 -2px;
+    }
+    .form-section-divider hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid #E8DEFF;
+    }
+    .form-section-label {
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: #7C4DB5;
+      white-space: nowrap;
+    }
+    .promo-preview {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #9CA3AF;
+      transition: color .2s;
+    }
+    .promo-preview.valid   { color: #BE185D; }
+    .promo-preview.invalid { color: #B91C1C; }
 
     .admin-product-actions {
       display: flex;
@@ -530,6 +560,41 @@
               <input type="checkbox" id="f-destacado" />
               <span>Destacado (primero en grilla)</span>
             </label>
+          </div>
+
+          <!-- ── Sección Promoción ── -->
+          <div class="form-section-divider">
+            <hr /><span class="form-section-label">PROMOCIÓN</span><hr />
+          </div>
+
+          <div class="form-checkboxes" style="grid-column:1/-1">
+            <label class="form-check">
+              <input type="checkbox" id="f-promo-activa" />
+              <span>Activar promoción</span>
+            </label>
+          </div>
+
+          <div class="form-field">
+            <label for="f-precio-oferta">Precio de oferta (CLP)</label>
+            <input type="number" id="f-precio-oferta" placeholder="11990" min="0" />
+            <span class="hint promo-preview" id="f-descuento-preview">—</span>
+          </div>
+
+          <div class="form-field">
+            <label for="f-texto-promo">Texto del badge</label>
+            <input type="text" id="f-texto-promo" placeholder="Oferta, Cyber, Promo limitada…" />
+          </div>
+
+          <div class="form-field">
+            <label for="f-promo-inicio">Inicio (opcional)</label>
+            <input type="datetime-local" id="f-promo-inicio" />
+            <span class="hint">Deja vacío para activar de inmediato</span>
+          </div>
+
+          <div class="form-field">
+            <label for="f-promo-fin">Término (opcional)</label>
+            <input type="datetime-local" id="f-promo-fin" />
+            <span class="hint">Deja vacío para promo sin vencimiento</span>
           </div>
         </div>
 

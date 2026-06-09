@@ -87,3 +87,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Reinicia la secuencia para que el próximo id auto sea 4+
 SELECT setval('public.products_id_seq', (SELECT MAX(id) FROM public.products));
+
+-- ============================================================
+-- MIGRACIÓN: Campos de promoción/oferta
+-- Si ya corriste el setup anterior, ejecuta SOLO este bloque.
+-- ============================================================
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS promo_activa   BOOLEAN     DEFAULT false,
+  ADD COLUMN IF NOT EXISTS precio_oferta  INTEGER     DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS texto_promo    TEXT        DEFAULT 'Oferta',
+  ADD COLUMN IF NOT EXISTS promo_inicio   TIMESTAMPTZ DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS promo_fin      TIMESTAMPTZ DEFAULT NULL;

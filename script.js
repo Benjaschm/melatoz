@@ -15,6 +15,25 @@
     return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
+  // ── Promo helpers ──────────────────────────────────────────
+  function isPromoActive(p) {
+    if (!p.promo_activa) return false;
+    const oferta = p.precio_oferta;
+    if (!oferta || oferta <= 0 || oferta >= p.precio) return false;
+    const now = new Date();
+    if (p.promo_inicio && new Date(p.promo_inicio) > now) return false;
+    if (p.promo_fin   && new Date(p.promo_fin)   < now) return false;
+    return true;
+  }
+
+  function getEffectivePrice(p) {
+    return isPromoActive(p) ? p.precio_oferta : p.precio;
+  }
+
+  function discountPct(p) {
+    return Math.round((1 - p.precio_oferta / p.precio) * 100);
+  }
+
   // ── LocalStorage ───────────────────────────────────────────
   function saveCart() {
     try { localStorage.setItem('melatoz_cart', JSON.stringify(cart)); } catch (e) {}
@@ -72,6 +91,9 @@
 
     const badgeClass = outOfStock ? 'badge-out' : getBadgeClass(product.etiqueta);
     const badgeText  = outOfStock ? 'Sin stock' : (product.etiqueta || '');
+    const promoOn    = isPromoActive(product);
+    const pct        = promoOn ? discountPct(product) : 0;
+    const promoLabel = (product.texto_promo || 'Oferta').toUpperCase();
 
     const addBtnHtml = outOfStock
       ? `<button class="btn-wa-consult" onclick="window.open('https://wa.me/${WHATSAPP_NUMBER}?text=${consultMsg}','_blank')">
@@ -87,6 +109,14 @@
            ${inCart ? 'En el carrito' : 'Agregar al carrito'}
          </button>`;
 
+    const priceHtml = promoOn
+      ? `<div class="product-price-wrap">
+           <span class="price-original">${formatPrice(product.precio)}</span>
+           <span class="price-sale">${formatPrice(product.precio_oferta)}</span>
+           <span class="promo-pct-badge">-${pct}%</span>
+         </div>`
+      : `<p class="product-price">${formatPrice(product.precio)}</p>`;
+
     article.innerHTML = `
       <div class="product-img-wrap">
         ${imgHtml}
@@ -94,6 +124,7 @@
         <span class="stock-badge ${outOfStock ? 'stock-no' : 'stock-ok'}">
           ${outOfStock ? '✕ Sin stock' : '✓ Disponible'}
         </span>
+        ${promoOn ? `<span class="promo-img-badge">${promoLabel}</span>` : ''}
       </div>
       <div class="product-body">
         <div class="product-meta">
@@ -102,7 +133,7 @@
         </div>
         <h3 class="product-name">${product.nombre}</h3>
         <p class="product-desc">${product.descripcion}</p>
-        <p class="product-price">${formatPrice(product.precio)}</p>
+        ${priceHtml}
       </div>
       <div class="product-footer">
         ${addBtnHtml}
@@ -230,7 +261,7 @@
   function calculateTotal() {
     return cart.reduce((sum, item) => {
       const p = getProductById(item.id);
-      return sum + (p ? p.precio * item.qty : 0);
+      return sum + (p ? getEffectivePrice(p) * item.qty : 0);
     }, 0);
   }
 
@@ -272,6 +303,18 @@
       const p = getProductById(item.id);
       if (!p) return;
 
+      const promoOn    = isPromoActive(p);
+      const effPrice   = getEffectivePrice(p);
+      const pct        = promoOn ? discountPct(p) : 0;
+
+      const priceHtml = promoOn
+        ? `<div class="cart-item-price-wrap">
+             <span class="cart-item-price-sale">${formatPrice(effPrice * item.qty)}</span>
+             <span class="cart-item-price-original">${formatPrice(p.precio * item.qty)}</span>
+             <span class="cart-promo-tag">-${pct}% OFF</span>
+           </div>`
+        : `<span class="cart-item-price">${formatPrice(effPrice * item.qty)}</span>`;
+
       const div = document.createElement('div');
       div.className = 'cart-item';
       div.innerHTML = `
@@ -289,7 +332,7 @@
               <span class="qty-value">${item.qty}</span>
               <button class="btn-qty" data-action="inc" data-id="${p.id}" aria-label="Aumentar cantidad">+</button>
             </div>
-            <span class="cart-item-price">${formatPrice(p.precio * item.qty)}</span>
+            ${priceHtml}
             <button class="btn-remove-item" data-id="${p.id}" aria-label="Eliminar producto">✕ quitar</button>
           </div>
         </div>
@@ -325,7 +368,12 @@
     let msg = 'Hola! 👋 Quiero comprar en *Melatoz* los siguientes productos:\n\n';
     cart.forEach(item => {
       const p = getProductById(item.id);
-      if (p) msg += `• *${p.nombre}* ${p.dosis}, ${p.cantidad} gomitas × ${item.qty}\n`;
+      if (!p) return;
+      if (isPromoActive(p)) {
+        msg += `• *${p.nombre}* ${p.dosis}, ${p.cantidad} gomitas × ${item.qty} — Promo: ${formatPrice(p.precio_oferta)} CLP (antes ${formatPrice(p.precio)})\n`;
+      } else {
+        msg += `• *${p.nombre}* ${p.dosis}, ${p.cantidad} gomitas × ${item.qty} — ${formatPrice(p.precio)} CLP\n`;
+      }
     });
 
     const total = calculateTotal();
