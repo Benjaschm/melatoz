@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+Icon
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log

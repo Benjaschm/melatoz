@@ -1,0 +1,34 @@
+CARPETA DE IMÁGENES — Melatoz
+==============================
+
+Guarda aquí los archivos de imagen de los productos.
+El nombre del archivo DEBE coincidir exactamente con lo que
+está en products.js en el campo "imagen".
+
+IMÁGENES NECESARIAS:
+--------------------
+  natrol-kids-1mg-90.jpg        → Foto del frasco Kids 1mg (foto con frasco morado, gomitas)
+  natrol-10mg-90.jpg            → Foto del frasco adultos 10mg, 90 gomitas
+  natrol-10mg-140.jpg           → Foto del frasco adultos 10mg, 140 gomitas
+  supplement-facts-kids-1mg.jpg → Tabla nutricional Kids
+  supplement-facts-10mg-90.jpg  → Tabla nutricional 10mg (45 porciones)
+  supplement-facts-10mg-140.jpg → Tabla nutricional 10mg (70 porciones)
+  gummies.jpg                   → Foto de las gomitas sueltas (opcional, para hero)
+  hero-sleep.jpg                → Imagen opcional para el hero (persona durmiendo, luna, etc.)
+
+RECOMENDACIONES:
+----------------
+  - Tamaño recomendado: 600×600px mínimo para los productos
+  - Formato: JPG o PNG (JPG es más liviano)
+  - Fondo blanco o transparente (PNG) para mejor presentación en las cards
+  - Las imágenes se muestran con object-fit: contain, así que puedes usar
+    fondos blancos o transparentes sin problema
+  - Mantén el mismo nombre de archivo que aparece en products.js
+
+PARA CAMBIAR LA IMAGEN DE UN PRODUCTO:
+---------------------------------------
+  1. Guarda el nuevo archivo en esta carpeta
+  2. Abre products.js
+  3. Cambia el valor del campo "imagen" por el nuevo nombre de archivo
+     Ejemplo: imagen: "assets/images/mi-nueva-foto.jpg"
+  4. Recarga index.html en el navegador
