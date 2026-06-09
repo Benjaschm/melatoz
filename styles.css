@@ -562,18 +562,27 @@ p  { line-height: 1.7; }
   flex-shrink: 0;
 }
 
-/* Stack: único contexto de posicionamiento — height = hero-img */
+/*
+ * Stack: flex-row para composición "familia de productos"
+ * — glow y badge son position:absolute (fuera del flujo)
+ * — kids y hero-img son flex items (nunca se apilan en columna)
+ * — padding-bottom reserva espacio para el badge
+ */
 .hero-product-stack {
   position: relative;
   width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 30px;
 }
 
-/* Glow detrás del producto principal */
+/* Glow suave centrado detrás del conjunto */
 .hero-image-glow {
   position: absolute;
-  width: 206px;
-  height: 206px;
-  background: radial-gradient(circle, rgba(168,125,216,.42) 0%, transparent 70%);
+  width: 210px;
+  height: 210px;
+  background: radial-gradient(circle, rgba(168,125,216,.40) 0%, transparent 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -582,12 +591,11 @@ p  { line-height: 1.7; }
   z-index: 0;
 }
 
-/* Producto principal — bloque centrado, define la altura del stack */
+/* Producto principal — protagonista, item derecho del flex */
 .hero-img {
-  display: block;
-  width: clamp(180px, 56vw, 212px);
+  width: clamp(175px, 55vw, 208px);
   height: auto;
-  margin: 0 auto;
+  flex-shrink: 0;
   position: relative;
   z-index: 3;
   object-fit: contain;
@@ -596,36 +604,42 @@ p  { line-height: 1.7; }
   filter: drop-shadow(0 20px 40px rgba(91,45,142,.55));
 }
 
-/* Kids — oculto en mobile; absolute + todos los estilos desde 640px */
+/*
+ * Kids — oculto en mobile.
+ * Cuando se activa (640px+), es un flex item a la IZQUIERDA del principal.
+ * margin-right negativo crea el solape lateral que da profundidad.
+ * margin-bottom lo eleva levemente del baseline para el efecto flotante.
+ * z-index 1 < z-index 3 del principal → kids queda visualmente detrás.
+ */
 .hero-img-kids { display: none; }
 
-/* Badge pill — abajo-derecha del stack, no tapa el frasco */
+/* Badge premium — absoluto sobre el área de padding inferior del stack */
 .hero-pill {
   position: absolute;
-  bottom: -6px;
+  bottom: 2px;
   right: 4px;
-  background: rgba(255,255,255,.97);
+  background: rgba(255,255,255,.95);
+  border: 1px solid rgba(255,255,255,.55);
   border-radius: 50px;
-  padding: 7px 13px 7px 9px;
+  padding: 7px 14px 7px 10px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  box-shadow: 0 4px 18px rgba(0,0,0,.14), 0 1px 4px rgba(0,0,0,.07);
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.06);
   z-index: 5;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   white-space: nowrap;
 }
 .hero-pill-emoji { font-size: 1.1rem; line-height: 1; }
-.hero-pill div    { line-height: 1.3; }
-.hero-pill strong { display: block; font-size: .78rem; color: var(--text-dark); }
-.hero-pill span   { font-size: .67rem; color: var(--text-muted); }
+.hero-pill div    { line-height: 1.35; }
+.hero-pill strong { display: block; font-size: .8rem; font-weight: 700; color: var(--text-dark); }
+.hero-pill span   { font-size: .68rem; color: var(--text-muted); }
 
 .no-img {
-  display: block;
   width: 200px;
   height: 200px;
-  margin: 0 auto;
+  flex-shrink: 0;
   background: rgba(255,255,255,.08);
   border-radius: var(--radius-lg);
   border: 2px dashed rgba(255,255,255,.2);
@@ -1617,27 +1631,30 @@ p  { line-height: 1.7; }
   .contact-main  { grid-column: 1 / -1; }
 
   .hero-actions { flex-direction: row; justify-content: center; }
-  /* Hero visual — tablet */
-  .hero-visual     { max-width: 400px; }
-  .hero-img        { width: 248px; }
-  .hero-image-glow { width: 258px; height: 258px; }
-  /* Kids: absoluto, lateral-izquierdo, detrás del principal */
+  /* Hero visual — tablet: composición familia de productos */
+  .hero-visual        { max-width: 400px; }
+  .hero-img           { width: 224px; }
+  .hero-image-glow    { width: 236px; height: 236px; }
+  .hero-product-stack { padding-bottom: 36px; }
+  /* Kids: flex item a la izquierda, tamaño secundario, leve solape para profundidad */
   .hero-img-kids {
-    position: absolute;
     display: block;
-    width: 106px;         /* ~43 % del principal */
+    position: relative;
+    width: 92px;
     height: auto;
-    top: 38px;            /* alineado al tercio superior del frasco adulto */
-    left: 2px;            /* pegado al borde izquierdo del stack */
-    z-index: 1;           /* detrás del principal (z-index 3) */
+    flex-shrink: 0;
+    z-index: 1;
     object-fit: contain;
     pointer-events: none;
+    margin-right: -14px;
+    margin-bottom: 5px;
+    align-self: flex-end;
     animation: float 7.8s ease-in-out infinite;
     animation-delay: -5.4s;
-    filter: drop-shadow(0 8px 18px rgba(91,45,142,.35));
-    opacity: 0.9;
+    filter: drop-shadow(0 8px 18px rgba(91,45,142,.30));
+    opacity: 0.92;
   }
-  .hero-pill { bottom: -4px; right: 6px; }
+  .hero-pill { bottom: 4px; right: 6px; }
 
   /* benefits tablet */
   .bfx-stage  { height: 380px; }
@@ -1681,12 +1698,12 @@ p  { line-height: 1.7; }
   .hero-actions { justify-content: flex-start; }
   .hero-subtitle { margin-left: 0; }
   /* Hero visual — desktop */
-  .hero-visual     { max-width: 490px; }
-  .hero-img        { width: 302px; }
-  .hero-image-glow { width: 316px; height: 316px; }
-  /* Kids: más grande, mismo esquema lateral-izquierdo detrás del principal */
-  .hero-img-kids   { width: 130px; top: 50px; left: 10px; } /* ~43 % de 302 */
-  .hero-pill       { bottom: -10px; right: 12px; }
+  .hero-visual        { max-width: 490px; }
+  .hero-img           { width: 272px; }
+  .hero-image-glow    { width: 286px; height: 286px; }
+  .hero-product-stack { padding-bottom: 42px; }
+  .hero-img-kids      { width: 112px; margin-right: -18px; margin-bottom: 7px; }
+  .hero-pill          { bottom: 6px; right: 12px; }
 
   /* benefits: stage LEFT + content RIGHT */
   .bfx-wrap        { flex-direction: row; align-items: center; gap: 60px; }
