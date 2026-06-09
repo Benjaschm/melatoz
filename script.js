@@ -188,8 +188,12 @@
     const product = getProductById(productId);
     if (!product || !product.stock) return;
 
+    const maxQty = (typeof product.stock_cantidad === 'number') ? product.stock_cantidad : null;
+    if (maxQty === 0) return;
+
     const existing = cart.find(i => i.id === productId);
     if (existing) {
+      if (maxQty !== null && existing.qty >= maxQty) return;
       existing.qty += 1;
     } else {
       cart.push({ id: productId, qty: 1 });
@@ -238,6 +242,11 @@
   function updateCartQty(productId, delta) {
     const item = cart.find(i => i.id === productId);
     if (!item) return;
+    if (delta > 0) {
+      const product = getProductById(productId);
+      const maxQty = (typeof product?.stock_cantidad === 'number') ? product.stock_cantidad : null;
+      if (maxQty !== null && item.qty >= maxQty) return;
+    }
     item.qty += delta;
     if (item.qty <= 0) { removeFromCart(productId); return; }
     saveCart();
@@ -311,6 +320,8 @@
       const promoOn    = isPromoActive(p);
       const effPrice   = getEffectivePrice(p);
       const pct        = promoOn ? discountPct(p) : 0;
+      const maxQty     = (typeof p.stock_cantidad === 'number') ? p.stock_cantidad : null;
+      const atMax      = maxQty !== null && item.qty >= maxQty;
 
       const priceHtml = promoOn
         ? `<div class="cart-item-price-wrap">
@@ -335,8 +346,9 @@
             <div class="qty-controls">
               <button class="btn-qty" data-action="dec" data-id="${p.id}" aria-label="Disminuir cantidad">−</button>
               <span class="qty-value">${item.qty}</span>
-              <button class="btn-qty" data-action="inc" data-id="${p.id}" aria-label="Aumentar cantidad">+</button>
+              <button class="btn-qty${atMax ? ' at-max' : ''}" data-action="inc" data-id="${p.id}" aria-label="Aumentar cantidad" ${atMax ? 'disabled' : ''}>+</button>
             </div>
+            ${atMax ? `<span class="cart-stock-max">máx. ${maxQty}</span>` : ''}
             ${priceHtml}
             <button class="btn-remove-item" data-id="${p.id}" aria-label="Eliminar producto">✕ quitar</button>
           </div>

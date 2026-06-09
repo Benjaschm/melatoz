@@ -1544,7 +1544,19 @@ p  { line-height: 1.7; }
   border: none;
 }
 .btn-qty:hover { background: var(--purple-500); color: var(--white); }
+.btn-qty:disabled,
+.btn-qty.at-max {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .qty-value { font-size: .9rem; font-weight: 800; min-width: 20px; text-align: center; }
+.cart-stock-max {
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
 
 .cart-item-price {
   font-size: .9rem;
