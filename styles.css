@@ -489,7 +489,7 @@ p  { line-height: 1.7; }
   align-items: center;
   gap: 48px;
   padding-top: 56px;
-  padding-bottom: 96px;
+  padding-bottom: 48px;
   position: relative;
   z-index: 1;
 }
@@ -1627,11 +1627,11 @@ p  { line-height: 1.7; }
   .hero-container {
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     padding-top: 80px;
-    padding-bottom: 120px;
+    padding-bottom: 60px;
   }
-  .hero-content { text-align: left; }
+  .hero-content { text-align: left; padding-bottom: 20px; }
   .hero-trust-row { justify-content: flex-start; }
   .hero-actions { justify-content: flex-start; }
   .hero-subtitle { margin-left: 0; }
