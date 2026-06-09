@@ -555,59 +555,95 @@ p  { line-height: 1.7; }
   align-items: center;
 }
 
-/* Hero visual */
-.hero-visual { width: 100%; max-width: 340px; }
-.hero-image-wrap {
+/* Hero visual — stage que contiene todos los elementos del lado derecho */
+.hero-visual {
+  width: 100%;
+  max-width: 340px;
   position: relative;
+  height: 252px;
+  flex-shrink: 0;
+}
+
+/* Wrapper del producto principal: llena el stage */
+.hero-image-wrap {
+  position: absolute;
+  inset: 0;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
+
+/* Glow detrás del producto principal */
 .hero-image-glow {
   position: absolute;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(168,125,216,.4) 0%, transparent 70%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(168,125,216,.42) 0%, transparent 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   pointer-events: none;
-}
-.hero-img {
-  width: 220px;
-  height: 220px;
-  object-fit: contain;
-  animation: float 6s ease-in-out infinite;
-  filter: drop-shadow(0 20px 40px rgba(91,45,142,.5));
-  position: relative;
-  z-index: 1;
+  z-index: 0;
 }
 
+/* Producto principal */
+.hero-img {
+  width: 200px;
+  height: auto;
+  max-height: 224px;
+  object-fit: contain;
+  animation: float 6s ease-in-out infinite;
+  animation-delay: -2s;
+  filter: drop-shadow(0 20px 40px rgba(91,45,142,.55));
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+/* Producto kids: oculto en mobile, se activa desde 640px */
+.hero-img-kids {
+  display: none;
+  position: absolute;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 22px rgba(91,45,142,.38));
+  opacity: 0.88;
+  animation: float 7.8s ease-in-out infinite;
+  animation-delay: -5.4s;
+}
+
+/* Badge tipo pill — separado del frasco */
+.hero-pill {
+  position: absolute;
+  bottom: -6px;
+  right: 0;
+  background: rgba(255,255,255,.97);
+  border-radius: 50px;
+  padding: 7px 13px 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.14), 0 1px 4px rgba(0,0,0,.07);
+  z-index: 5;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.hero-pill-emoji { font-size: 1.1rem; line-height: 1; }
+.hero-pill div { line-height: 1.3; }
+.hero-pill strong { display: block; font-size: .78rem; color: var(--text-dark); }
+.hero-pill span   { font-size: .67rem; color: var(--text-muted); }
+
 .no-img {
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   background: rgba(255,255,255,.08);
   border-radius: var(--radius-lg);
   border: 2px dashed rgba(255,255,255,.2);
 }
-
-.hero-pill {
-  position: absolute;
-  bottom: 12px;
-  right: -10px;
-  background: var(--white);
-  border-radius: var(--radius-md);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: var(--shadow-lg);
-  z-index: 2;
-}
-.hero-pill-emoji { font-size: 1.4rem; }
-.hero-pill div { line-height: 1.3; }
-.hero-pill strong { display: block; font-size: .85rem; color: var(--text-dark); }
-.hero-pill span { font-size: .72rem; color: var(--text-muted); }
 
 .hero-wave {
   position: absolute;
@@ -827,10 +863,12 @@ p  { line-height: 1.7; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bfx-product  { animation: none !important; transform: translate(-50%, -50%); }
+  .hero-img,
+  .hero-img-kids { animation: none !important; }
+  .bfx-product   { animation: none !important; transform: translate(-50%, -50%); }
   .bfx-luna,
   .bfx-gummy,
-  .bfx-blob     { animation: none !important; }
+  .bfx-blob      { animation: none !important; }
 }
 
 /* ── PRODUCTS ───────────────────────────────────────────────── */
@@ -1593,7 +1631,17 @@ p  { line-height: 1.7; }
   .contact-main  { grid-column: 1 / -1; }
 
   .hero-actions { flex-direction: row; justify-content: center; }
-  .hero-img { width: 280px; height: 280px; }
+  /* Hero visual — tablet: mostrar kids, agrandar stage */
+  .hero-visual     { height: 320px; max-width: 380px; }
+  .hero-img        { width: 245px; max-height: 270px; }
+  .hero-image-glow { width: 255px; height: 255px; }
+  .hero-img-kids {
+    display: block;
+    width: 112px;
+    bottom: 22px;
+    left: 6px;
+  }
+  .hero-pill { bottom: -4px; right: 4px; }
 
   /* benefits tablet */
   .bfx-stage  { height: 380px; }
@@ -1636,8 +1684,12 @@ p  { line-height: 1.7; }
   .hero-trust-row { justify-content: flex-start; }
   .hero-actions { justify-content: flex-start; }
   .hero-subtitle { margin-left: 0; }
-  .hero-visual { max-width: 460px; }
-  .hero-img { width: 360px; height: 360px; }
+  /* Hero visual — desktop */
+  .hero-visual     { max-width: 490px; height: 420px; }
+  .hero-img        { width: 305px; max-height: 340px; }
+  .hero-image-glow { width: 320px; height: 320px; }
+  .hero-img-kids   { width: 152px; bottom: 28px; left: 12px; }
+  .hero-pill       { bottom: -10px; right: 10px; }
 
   /* benefits: stage LEFT + content RIGHT */
   .bfx-wrap        { flex-direction: row; align-items: center; gap: 60px; }
