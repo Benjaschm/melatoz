@@ -563,39 +563,38 @@ p  { line-height: 1.7; }
 }
 
 /*
- * Stack: flex-row para composición "familia de productos"
- * — glow y badge son position:absolute (fuera del flujo)
- * — kids y hero-img son flex items (nunca se apilan en columna)
- * — padding-bottom reserva espacio para el badge
+ * Stack: bloque con position:relative como contexto de posicionamiento.
+ * — Adult (hero-img) en flujo normal, define la altura del contenedor.
+ * — Kids (hero-img-kids) absoluto con coordenadas x/y precisas.
+ * — Glow y badge también absolutos (fuera del flujo).
+ * — padding-bottom reserva espacio limpio para el badge.
  */
 .hero-product-stack {
   position: relative;
   width: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   padding-bottom: 30px;
 }
 
-/* Glow suave centrado detrás del conjunto */
+/* Glow suave centrado sobre el adulto (mobile: centrado) */
 .hero-image-glow {
   position: absolute;
-  width: 210px;
-  height: 210px;
-  background: radial-gradient(circle, rgba(168,125,216,.40) 0%, transparent 70%);
+  width: 214px;
+  height: 214px;
+  background: radial-gradient(circle, rgba(168,125,216,.44) 0%, transparent 70%);
   border-radius: 50%;
-  top: 50%;
+  top: 48%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Producto principal — protagonista, item derecho del flex */
+/* Producto adulto — protagonista, en flujo, define altura del stack */
 .hero-img {
+  display: block;
   width: clamp(175px, 55vw, 208px);
   height: auto;
-  flex-shrink: 0;
+  margin: 0 auto;
   position: relative;
   z-index: 3;
   object-fit: contain;
@@ -606,14 +605,14 @@ p  { line-height: 1.7; }
 
 /*
  * Kids — oculto en mobile.
- * Cuando se activa (640px+), es un flex item a la IZQUIERDA del principal.
- * margin-right negativo crea el solape lateral que da profundidad.
- * margin-bottom lo eleva levemente del baseline para el efecto flotante.
- * z-index 1 < z-index 3 del principal → kids queda visualmente detrás.
+ * Desde 640px: absoluto, izquierda del adulto, ligeramente más abajo.
+ * left controla separación horizontal respecto al borde del container.
+ * bottom controla alineación vertical (más bajo = mayor valor de bottom que el padding).
+ * Con z-index 1 < adulto (3) queda detrás en la zona de solape.
  */
 .hero-img-kids { display: none; }
 
-/* Badge premium — absoluto sobre el área de padding inferior del stack */
+/* Badge — absoluto en el área inferior del stack */
 .hero-pill {
   position: absolute;
   bottom: 2px;
@@ -621,25 +620,26 @@ p  { line-height: 1.7; }
   background: rgba(255,255,255,.95);
   border: 1px solid rgba(255,255,255,.55);
   border-radius: 50px;
-  padding: 7px 14px 7px 10px;
+  padding: 6px 12px 6px 9px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.06);
+  gap: 7px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.06);
   z-index: 5;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   white-space: nowrap;
 }
-.hero-pill-emoji { font-size: 1.1rem; line-height: 1; }
+.hero-pill-emoji { font-size: 1rem; line-height: 1; }
 .hero-pill div    { line-height: 1.35; }
-.hero-pill strong { display: block; font-size: .8rem; font-weight: 700; color: var(--text-dark); }
-.hero-pill span   { font-size: .68rem; color: var(--text-muted); }
+.hero-pill strong { display: block; font-size: .76rem; font-weight: 700; color: var(--text-dark); }
+.hero-pill span   { font-size: .66rem; color: var(--text-muted); }
 
 .no-img {
+  display: block;
   width: 200px;
   height: 200px;
-  flex-shrink: 0;
+  margin: 0 auto;
   background: rgba(255,255,255,.08);
   border-radius: var(--radius-lg);
   border: 2px dashed rgba(255,255,255,.2);
@@ -1631,30 +1631,44 @@ p  { line-height: 1.7; }
   .contact-main  { grid-column: 1 / -1; }
 
   .hero-actions { flex-direction: row; justify-content: center; }
-  /* Hero visual — tablet: composición familia de productos */
+  /* ── Hero visual — tablet (640px) ── */
   .hero-visual        { max-width: 400px; }
-  .hero-img           { width: 224px; }
-  .hero-image-glow    { width: 236px; height: 236px; }
-  .hero-product-stack { padding-bottom: 36px; }
-  /* Kids: flex item a la izquierda, tamaño secundario, leve solape para profundidad */
+  .hero-product-stack { padding-bottom: 40px; }
+  /* Adulto: centrado, define la altura del stack */
+  .hero-img           { width: 216px; }
+  /*
+   * Glow: expandido para abarcar ambos frascos.
+   * left: 54% lo sesga levemente hacia el adulto (más a la derecha).
+   */
+  .hero-image-glow    { width: 278px; height: 278px; left: 54%; }
+  /*
+   * Kids: absoluto.
+   * left: 4px → frasco Kids arranca cerca del borde izquierdo.
+   * bottom: 38px → su base queda ~2px más abajo que la base del adulto
+   *   (adulto base = padding-bottom = 40px; kids base = 38px → 2px por debajo).
+   * z-index: 1 → queda detrás del adulto (z-index 3) en la zona de solape.
+   * width: 104px = 48% de 216px → claramente secundario pero visible.
+   * El solape real depende de la posición del adulto centrado:
+   *   Adulto centrado en 400px → left edge ≈ 92px.
+   *   Kids right edge = 4 + 104 = 108px → solape de 16px (15% de kids).
+   *   Kids visible ≈ 88px (85% del frasco Kids visible).
+   */
   .hero-img-kids {
     display: block;
-    position: relative;
-    width: 92px;
+    position: absolute;
+    left: 4px;
+    bottom: 38px;
+    width: 104px;
     height: auto;
-    flex-shrink: 0;
     z-index: 1;
     object-fit: contain;
     pointer-events: none;
-    margin-right: -14px;
-    margin-bottom: 5px;
-    align-self: flex-end;
     animation: float 7.8s ease-in-out infinite;
     animation-delay: -5.4s;
-    filter: drop-shadow(0 8px 18px rgba(91,45,142,.30));
-    opacity: 0.92;
+    filter: drop-shadow(0 10px 22px rgba(91,45,142,.32));
+    opacity: 0.93;
   }
-  .hero-pill { bottom: 4px; right: 6px; }
+  .hero-pill { bottom: 4px; right: 8px; }
 
   /* benefits tablet */
   .bfx-stage  { height: 380px; }
@@ -1697,13 +1711,26 @@ p  { line-height: 1.7; }
   .hero-trust-row { justify-content: flex-start; }
   .hero-actions { justify-content: flex-start; }
   .hero-subtitle { margin-left: 0; }
-  /* Hero visual — desktop */
+  /* ── Hero visual — desktop (1024px) ── */
   .hero-visual        { max-width: 490px; }
-  .hero-img           { width: 272px; }
-  .hero-image-glow    { width: 286px; height: 286px; }
-  .hero-product-stack { padding-bottom: 42px; }
-  .hero-img-kids      { width: 112px; margin-right: -18px; margin-bottom: 7px; }
-  .hero-pill          { bottom: 6px; right: 12px; }
+  .hero-product-stack { padding-bottom: 46px; }
+  /* Adulto: protagonista, centrado, más grande */
+  .hero-img           { width: 256px; }
+  /*
+   * Glow ampliado: cubre toda la composición.
+   * left: 54% → sesgado hacia el adulto (el elemento visual más grande).
+   */
+  .hero-image-glow    { width: 318px; height: 318px; left: 54%; }
+  /*
+   * Kids desktop:
+   * Adulto centrado en 490px → left edge ≈ 117px.
+   * Kids left: 8px, width: 122px → right edge: 130px.
+   * Solape = 130 - 117 = 13px (11% de kids oculto).
+   * Kids visible ≈ 109px (89% visible).
+   * bottom: 43px → base del Kids ~3px más abajo que la base del adulto (46px padding).
+   */
+  .hero-img-kids      { left: 8px; bottom: 43px; width: 122px; }
+  .hero-pill          { bottom: 6px; right: 14px; }
 
   /* benefits: stage LEFT + content RIGHT */
   .bfx-wrap        { flex-direction: row; align-items: center; gap: 60px; }
