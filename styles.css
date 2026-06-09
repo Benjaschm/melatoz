@@ -582,6 +582,18 @@ p  { line-height: 1.7; }
   position: relative;
   z-index: 1;
 }
+.hero-img-secondary {
+  position: absolute;
+  width: 88px;
+  bottom: -10px;
+  left: 5%;
+  animation: float 8s ease-in-out infinite;
+  animation-delay: -5s;
+  filter: drop-shadow(0 10px 22px rgba(91,45,142,.45));
+  z-index: 2;
+  pointer-events: none;
+}
+
 .no-img {
   width: 220px;
   height: 220px;
@@ -1637,6 +1649,7 @@ p  { line-height: 1.7; }
   .hero-subtitle { margin-left: 0; }
   .hero-visual { max-width: 460px; }
   .hero-img { width: 360px; height: 360px; }
+  .hero-img-secondary { width: 120px; bottom: -15px; left: 20px; }
 
   /* benefits: stage LEFT + content RIGHT */
   .bfx-wrap        { flex-direction: row; align-items: center; gap: 60px; }
