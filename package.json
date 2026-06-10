@@ -1,0 +1,23 @@
+{
+  "name": "html",
+  "version": "1.0.0",
+  "description": "Landing page + e-commerce simple para vender melatoninas Natrol a través de WhatsApp.",
+  "main": "admin.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Benjaschm/melatoz.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Benjaschm/melatoz/issues"
+  },
+  "homepage": "https://github.com/Benjaschm/melatoz#readme",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}

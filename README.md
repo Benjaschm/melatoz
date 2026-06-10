@@ -1,16 +1,26 @@
 # Melatoz — Tienda de Melatoninas Natrol
 
-Landing page + e-commerce simple para vender melatoninas Natrol a través de WhatsApp.
+Landing page + tienda simple para vender melatoninas Natrol a través de WhatsApp.
+Catálogo, carrito, promociones y stock gestionados desde un panel admin con
+autenticación real (Supabase Auth) y base de datos en la nube (Supabase/PostgreSQL).
 
 ---
 
-## Cómo abrir la página
+## Arquitectura y seguridad (resumen)
 
-1. Abre la carpeta del proyecto en tu computador.
-2. Haz doble clic en `index.html` — se abre en tu navegador.
-3. Listo. No necesitas servidor, ni instalar nada.
+| Componente | Tecnología | Notas de seguridad |
+|------------|-----------|--------------------|
+| Sitio público | HTML/CSS/JS estático | Se puede alojar en GitHub Pages / Netlify / Vercel |
+| Base de datos | Supabase (PostgreSQL) | Protegida con Row Level Security (RLS) |
+| Login admin | Supabase Auth | Autenticación real con sesión; **no hay contraseñas en el código** |
+| Clave en el frontend | `anon` public key | Pública por diseño: sin permisos de escritura sin sesión |
 
-> Para subir la página a internet, ve a la sección "Cómo publicar" más abajo.
+**Modelo de seguridad:**
+- El visitante anónimo (clave `anon`) **solo puede leer** productos con `disponible = true`.
+- Crear, editar y eliminar productos **requiere un usuario autenticado** (RLS lo exige a nivel de base de datos, no del navegador).
+- La `service_role` key (acceso total que salta RLS) **nunca** está en el frontend ni en el repositorio. Solo se usa, si acaso, en el panel de Supabase.
+
+> ℹ️ Es normal y seguro que la `anon` key esté visible en `supabase-config.js`. Está diseñada para ser pública. Quien la inspeccione **no** puede escribir en la base de datos porque RLS lo bloquea.
 
 ---
 
@@ -19,221 +29,130 @@ Landing page + e-commerce simple para vender melatoninas Natrol a través de Wha
 ```
 /
 ├── index.html              → Página principal de la tienda
-├── styles.css              → Todos los estilos visuales
-├── script.js               → Lógica del carrito, WhatsApp, UI
-├── products.js             → CATÁLOGO DE PRODUCTOS (edita aquí)
-├── admin.html              → Panel de administración local
-├── admin.js                → Lógica del panel admin
+├── styles.css              → Estilos visuales
+├── script.js               → Carrito, WhatsApp, render de productos
+├── products.js             → Catálogo de respaldo (si Supabase no responde)
+├── supabase-config.js      → URL + anon key públicas (seguro exponer)
+├── admin.html              → Panel de administración (requiere login)
+├── admin.js                → Lógica del admin (Supabase Auth + CRUD)
+├── SETUP-SUPABASE.sql      → Script para crear tabla + políticas RLS
 ├── README.md               → Este archivo
-└── assets/
-    └── images/
-        ├── INSTRUCCIONES.txt   → Guía de imágenes
-        └── (tus imágenes aquí)
+└── assets/images/          → Imágenes de productos
 ```
 
----
-
-## Cómo cambiar el número de WhatsApp
-
-1. Abre `products.js`
-2. Busca la línea: `const WHATSAPP_NUMBER = "56939060956";`
-3. Cambia el número (con código de país, sin `+` ni espacios)
-4. Guarda el archivo
+> `node_modules/`, `screenshots/`, `package.json` y `screenshot.mjs` son herramientas de
+> desarrollo (Playwright para capturas). No son necesarias para que la tienda funcione
+> y están ignoradas en `.gitignore`.
 
 ---
 
-## Cómo editar productos en `products.js`
+## Configurar Supabase (una sola vez)
 
-Abre `products.js` y modifica el array `PRODUCTS`. Cada producto tiene estos campos:
+1. Crea un proyecto en [supabase.com](https://supabase.com).
+2. Ve a **SQL Editor → New query**, pega el contenido de `SETUP-SUPABASE.sql` y ejecútalo.
+   Esto crea la tabla `products`, las políticas RLS y los productos iniciales.
+3. Ve a **Project Settings → API** y copia:
+   - **Project URL** → pégala en `supabase-config.js` como `SUPABASE_URL`.
+   - **anon public key** → pégala en `supabase-config.js` como `SUPABASE_ANON`.
+   - **No copies la `service_role` key a ningún archivo del proyecto.**
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | número | Identificador único. No cambiar una vez creado |
-| `nombre` | texto | Nombre completo del producto |
-| `marca` | texto | Marca (ej: "Natrol") |
-| `dosis` | texto | Dosis por porción (ej: "10mg") |
-| `cantidad` | número | Gomitas totales en el envase |
-| `sabor` | texto | Sabor del producto |
-| `descripcion` | texto | Texto corto para la card de producto |
-| `precio` | número | Precio en CLP, sin puntos (ej: `14990`) |
-| `imagen` | texto | Ruta relativa de la imagen principal |
-| `imagenes` | array | Rutas de imágenes adicionales |
-| `stock` | true/false | `true` = con stock, `false` = agotado |
-| `disponible` | true/false | `true` = se muestra, `false` = oculto |
-| `etiqueta` | texto | Badge de color en la card (ej: "Más vendido") |
-| `categoria` | texto | `"adultos"` o `"kids"` |
-| `destacado` | true/false | `true` = aparece primero en la grilla |
+### Crear el usuario admin
 
-### Cambiar precio de un producto
+1. En Supabase ve a **Authentication → Users → Add user**.
+2. Crea un usuario con tu correo y una contraseña fuerte (mínimo 12 caracteres, única).
+3. Ese correo y contraseña son los que usarás para entrar en `admin.html`.
 
-```js
-precio: 15990,   // ← cambia este número
-```
-
-### Marcar un producto como sin stock
-
-```js
-stock: false,   // ← cambia a false
-```
-
-El botón "Agregar al carrito" cambiará automáticamente a "Consultar disponibilidad".
-
-### Ocultar un producto sin eliminarlo
-
-```js
-disponible: false,   // ← cambia a false
-```
-
-El producto no aparecerá en la tienda hasta que vuelvas a `true`.
-
-### Agregar un producto nuevo
-
-Copia este bloque al final del array `PRODUCTS` (antes del `]`) y rellena los datos:
-
-```js
-{
-  id: 4,                    // ← número nuevo (el siguiente disponible)
-  nombre: "Nombre del producto",
-  marca: "Natrol",
-  dosis: "5mg",
-  cantidad: 60,
-  sabor: "Frambuesa",
-  descripcion: "Descripción corta del producto.",
-  precio: 11990,
-  imagen: "assets/images/mi-producto.jpg",
-  imagenes: ["assets/images/mi-producto.jpg"],
-  stock: true,
-  disponible: true,
-  etiqueta: "Nuevo",
-  categoria: "adultos",
-  destacado: false
-}
-```
-
-### Eliminar un producto
-
-Borra el bloque completo del producto en `products.js`, desde `{` hasta `}` (incluida la coma final si no es el último).
+> El usuario admin vive en Supabase, no en el código. Para cambiar la contraseña,
+> hazlo desde **Authentication → Users** en el panel de Supabase.
 
 ---
 
-## Cómo cambiar imágenes
+## Verificar que RLS está activo (importante antes de publicar)
 
-1. Guarda el nuevo archivo en `assets/images/`
-2. Abre `products.js` y cambia el campo `imagen` del producto:
-   ```js
-   imagen: "assets/images/mi-nueva-imagen.jpg",
-   ```
-3. Recarga `index.html`
+En Supabase → **Authentication → Policies**, confirma que la tabla `products` tiene RLS
+**activado** y estas políticas:
 
-Nombres de archivo sugeridos para los productos actuales:
-- `natrol-kids-1mg-90.jpg`
-- `natrol-10mg-90.jpg`
-- `natrol-10mg-140.jpg`
+- `anon_read_available` → SELECT, solo `disponible = true` (visitantes).
+- `admin_read_all` → SELECT para `authenticated`.
+- `admin_insert` / `admin_update` / `admin_delete` → solo `authenticated`.
+
+Si RLS aparece **desactivado**, cualquiera con la anon key podría escribir en tu base de datos.
+El script `SETUP-SUPABASE.sql` ya lo deja activado; solo verifica que no se haya apagado.
 
 ---
 
-## Panel de administración (admin.html)
+## Gestionar la tienda (panel admin)
 
-### Cómo abrir el admin
+1. Abre `admin.html` (en tu deploy o localmente).
+2. Inicia sesión con el usuario que creaste en Supabase.
+3. Desde ahí puedes:
+   - Agregar, editar y eliminar productos.
+   - Marcar con/sin stock y definir cantidad exacta de stock.
+   - Mostrar/ocultar productos.
+   - Configurar promociones (precio oferta, fechas, etiqueta).
+   - Reordenar productos arrastrándolos.
 
-1. Abre `admin.html` en el navegador (doble clic)
-2. Usa las credenciales:
-   - **Usuario:** `admin`
-   - **Contraseña:** `melatoz2024`
-
-### Cómo cambiar las credenciales del admin
-
-Abre `admin.js` y cambia estas dos líneas al inicio:
-
-```js
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'melatoz2024';
-```
-
-> ⚠️ **IMPORTANTE:** Esto no es seguridad real. Las credenciales están en texto plano en el código JavaScript. Cualquiera que inspeccione el código del navegador puede verlas. El panel admin es solo para **uso local** o prototipo.
-
-### Qué puedes hacer en el admin
-
-- Ver todos los productos
-- Editar nombre, precio, descripción, imagen, sabor, dosis, etc.
-- Marcar con/sin stock (toggle rápido)
-- Mostrar/ocultar producto
-- Agregar producto nuevo
-- Eliminar producto
-
-> **Nota:** Los cambios hechos en el admin se guardan en `localStorage` del navegador. Si abres `index.html` en otro navegador o dispositivo, seguirá mostrando los productos de `products.js`, no los del admin. Para que los cambios del admin afecten la tienda real, tendrías que copiar los datos manualmente a `products.js`.
+Todos los cambios se guardan en Supabase y se reflejan en la tienda al instante.
 
 ---
 
-## ⚠️ Limitaciones del panel admin sin backend
+## Editar el catálogo de respaldo (`products.js`)
 
-El panel admin actual:
-- Solo funciona en el navegador donde lo abras (datos en localStorage)
-- No sincroniza con la tienda real automáticamente
-- No tiene seguridad real (las credenciales son visibles en el código)
-- Si borras el historial del navegador, pierdes los cambios del admin
+`products.js` solo se usa si Supabase no responde (modo de respaldo). Si quieres que ese
+respaldo coincida con tu tienda real, edita el array `PRODUCTS` manualmente. En operación
+normal, **gestiona todo desde el admin**, no desde este archivo.
 
-**Para un admin seguro en producción necesitas:**
-- Un backend real: Firebase, Supabase, Airtable, Strapi, Sanity, etc.
-- Autenticación real con tokens y sesiones del servidor
-- Base de datos en la nube que sincronice con la tienda
+Datos de contacto editables al inicio de `products.js`:
 
----
-
-## Cómo publicar la página en internet
-
-### Opción 1: Netlify (gratis, recomendado)
-1. Crea cuenta en [netlify.com](https://netlify.com)
-2. Arrastra la carpeta del proyecto al dashboard
-3. Listo, tu tienda tiene URL pública
-
-### Opción 2: GitHub Pages (gratis)
-1. Sube el proyecto a un repositorio de GitHub
-2. Ve a Settings → Pages → Source: main branch
-3. Tu tienda queda en `tuusuario.github.io/melatoz`
-
-### Opción 3: Vercel (gratis)
-1. Crea cuenta en [vercel.com](https://vercel.com)
-2. Importa desde GitHub o sube la carpeta
-3. Deploy automático
+| Qué cambiar | Variable |
+|-------------|----------|
+| Número de WhatsApp | `WHATSAPP_NUMBER` |
+| Horario de atención | `HORARIO_ATENCION` |
+| Instagram | `INSTAGRAM_HANDLE` |
 
 ---
 
-## Cómo revisar que la página se vea bien en celular
+## Publicar la página en internet
 
-### Opción 1: DevTools del navegador
-1. Abre `index.html` en Chrome o Firefox
-2. Presiona `F12` → ícono de celular (Toggle device toolbar)
-3. Selecciona iPhone, Pixel, u otro dispositivo
+### GitHub Pages
+1. Sube el proyecto a un repositorio de GitHub.
+2. **Settings → Pages → Source: main branch**.
+3. Tu tienda queda en `tuusuario.github.io/melatoz`.
 
-### Opción 2: Red local con tu celular real
-1. Abre `index.html` en Chrome
-2. En la URL verás algo como `file:///...` — esto no funciona en el celular
-3. Necesitas un servidor local: abre Terminal y ejecuta:
-   ```bash
-   cd /ruta/a/tu/proyecto
-   python3 -m http.server 8080
-   ```
-4. En tu celular (misma red Wi-Fi), abre: `http://IP-DE-TU-MAC:8080`
-5. Tu IP de Mac la ves en Ajustes del sistema → Wi-Fi → detalles
+> El `admin.html` queda accesible en la URL pública, pero **está protegido por login real**.
+> Sin las credenciales de Supabase no se puede entrar ni modificar nada. Además lleva
+> `noindex` para que no aparezca en buscadores.
+
+También funciona igual en **Netlify** (arrastra la carpeta) o **Vercel** (importa el repo).
 
 ---
 
-## Personalización rápida
+## ¿Necesito servidor, backend, Terraform o puerto 22?
 
-| Qué cambiar | Dónde |
-|-------------|-------|
-| Número WhatsApp | `products.js` → `WHATSAPP_NUMBER` |
-| Horario de atención | `products.js` → `HORARIO_ATENCION` |
-| Instagram | `products.js` → `INSTAGRAM_HANDLE` |
-| Colores | `styles.css` → variables `:root` |
-| Fuentes | `index.html` → Google Fonts link |
-| Logo / nombre | `index.html` → `.brand-text` |
+**No.** Esta tienda es un sitio estático + Supabase como backend gestionado:
+
+- **Backend propio:** no. Supabase cumple ese rol (base de datos + auth + API).
+- **Servidor / VPS:** no. GitHub Pages/Netlify/Vercel sirven los archivos por ti.
+- **Puerto 22 (SSH):** no aplica. No administras ningún servidor propio.
+- **Terraform:** no aplica. No hay infraestructura que aprovisionar como código.
+
+Solo necesitarías esas cosas si en el futuro montaras un backend propio en un servidor/VPS.
+
+---
+
+## Checklist de seguridad antes de publicar
+
+- [ ] RLS activado en la tabla `products` (verificado en Supabase).
+- [ ] `supabase-config.js` contiene **solo** la anon key (nunca la service_role).
+- [ ] Usuario admin creado en Supabase con contraseña fuerte y única.
+- [ ] La contraseña del admin **no** está escrita en ningún archivo del repo.
+- [ ] `.env` y `node_modules/` ignorados en `.gitignore`.
+- [ ] `admin.html` tiene `noindex`.
 
 ---
 
 ## Créditos
 
-- Diseño y código: generado con Claude Code
-- Fuentes: Google Fonts (Nunito, Playfair Display)
-- Producto: Natrol Melatonin (marca registrada de sus respectivos dueños)
+- Diseño y código: generado con Claude Code.
+- Fuentes: Google Fonts (Nunito, Playfair Display).
+- Producto: Natrol Melatonin (marca registrada de sus respectivos dueños).
