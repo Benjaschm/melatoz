@@ -153,12 +153,15 @@ async function run() {
         if (selector) {
           try {
             await page.locator(selector).scrollIntoViewIfNeeded();
-            await page.waitForTimeout(200);
           } catch {}
         } else {
           await page.evaluate(() => window.scrollTo(0, 0));
-          await page.waitForTimeout(200);
         }
+        // Re-fuerza reveals (el contenido pudo re-renderizarse) y deja asentar transiciones
+        await page.evaluate(() => {
+          document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+        });
+        await page.waitForTimeout(800);
         const file = join(OUT, `${sec}_${vp.name}.png`);
         await page.screenshot({ path: file });
         taken.push(file);

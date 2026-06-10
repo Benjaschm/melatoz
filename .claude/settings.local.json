@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node screenshot.mjs --section=hero --no-open)"
+      "Bash(node screenshot.mjs --section=hero --no-open)",
+      "Bash(node screenshot.mjs --section=products --no-open)",
+      "Bash(node test-showcase.mjs)"
     ]
   }
 }
